@@ -71,11 +71,13 @@ type Generator struct {
 	projectName string
 	// repoPath is the project's repository path rooted under $GOPATH.
 	repoPath string
+	// autoCRD configures the operator to either create automatically the CRD, or generate crd.yaml
+	autoCRD bool
 }
 
 // NewGenerator creates a new scaffold Generator.
-func NewGenerator(apiVersion, kind, projectName, repoPath string) *Generator {
-	return &Generator{apiVersion: apiVersion, kind: kind, projectName: projectName, repoPath: repoPath}
+func NewGenerator(apiVersion, kind, projectName, repoPath string, autoCRD bool) *Generator {
+	return &Generator{apiVersion: apiVersion, kind: kind, projectName: projectName, repoPath: repoPath, autoCRD: autoCRD}
 }
 
 // Render generates the default project structure:
@@ -154,12 +156,12 @@ func (g *Generator) renderCmd() error {
 	if err := os.MkdirAll(cpDir, defaultDirFileMode); err != nil {
 		return err
 	}
-	return renderCmdFiles(cpDir, g.repoPath, g.apiVersion, g.kind)
+	return renderCmdFiles(cpDir, g.repoPath, g.apiVersion, g.kind, g.autoCRD)
 }
 
-func renderCmdFiles(cmdProjectDir, repoPath, apiVersion, kind string) error {
+func renderCmdFiles(cmdProjectDir, repoPath, apiVersion, kind string, autoCRD bool) error {
 	buf := &bytes.Buffer{}
-	if err := renderMainFile(buf, repoPath, apiVersion, kind); err != nil {
+	if err := renderMainFile(buf, repoPath, apiVersion, kind, autoCRD); err != nil {
 		return err
 	}
 	return writeFileAndPrint(filepath.Join(cmdProjectDir, main), buf.Bytes(), defaultFileMode)

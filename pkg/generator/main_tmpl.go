@@ -44,6 +44,9 @@ func main() {
 	if err != nil {
 		logrus.Fatalf("Failed to get watch namespace: %v", err)
 	}
+	{{if .AutoCRD -}}
+	sdk.CreateCRD(resource, kind, namespace)
+	{{- end}}
 	resyncPeriod := 5
 	logrus.Infof("Watching %s, %s, %s, %d", resource, kind, namespace, resyncPeriod)
 	sdk.Watch(resource, kind, namespace, resyncPeriod)

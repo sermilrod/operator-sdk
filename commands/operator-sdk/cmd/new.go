@@ -53,6 +53,7 @@ generates a skeletal app-operator application in $GOPATH/src/github.com/example.
 	newCmd.MarkFlagRequired("api-version")
 	newCmd.Flags().StringVar(&kind, "kind", "", "Kubernetes CustomResourceDefintion kind. (e.g AppService)")
 	newCmd.MarkFlagRequired("kind")
+	newCmd.Flags().BoolVar(&autoCRD, "auto-create-crd", false, "Makes the operator automatically create the CustomResourceDefintion. Disabled by default.")
 
 	return newCmd
 }
@@ -61,6 +62,7 @@ var (
 	apiVersion  string
 	kind        string
 	projectName string
+	autoCRD     bool
 )
 
 const (
@@ -77,7 +79,7 @@ func newFunc(cmd *cobra.Command, args []string) {
 	parse(args)
 	mustBeNewProject()
 	verifyFlags()
-	g := generator.NewGenerator(apiVersion, kind, projectName, repoPath())
+	g := generator.NewGenerator(apiVersion, kind, projectName, repoPath(), autoCRD)
 	err := g.Render()
 	if err != nil {
 		cmdError.ExitWithError(cmdError.ExitError, fmt.Errorf("failed to create project %v: %v", projectName, err))

@@ -38,10 +38,11 @@ type Main struct {
 
 	APIVersion string
 	Kind       string
+	AutoCRD    bool
 }
 
 // renderMainFile generates the cmd/<projectName>/main.go file.
-func renderMainFile(w io.Writer, repo, apiVersion, kind string) error {
+func renderMainFile(w io.Writer, repo, apiVersion, kind string, autoCRD bool) error {
 	t := template.New("cmd/<projectName>/main.go")
 	t, err := t.Parse(mainTmpl)
 	if err != nil {
@@ -55,6 +56,7 @@ func renderMainFile(w io.Writer, repo, apiVersion, kind string) error {
 		SDKVersionImport:  versionImport,
 		APIVersion:        apiVersion,
 		Kind:              kind,
+		AutoCRD:           autoCRD,
 	}
 	return t.Execute(w, m)
 }
