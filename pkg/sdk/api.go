@@ -16,10 +16,12 @@ package sdk
 
 import (
 	"context"
+	"strings"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sclient"
 	sdkHandler "github.com/operator-framework/operator-sdk/pkg/sdk/handler"
 	sdkInformer "github.com/operator-framework/operator-sdk/pkg/sdk/informer"
+	"github.com/operator-framework/operator-sdk/pkg/util/k8sutil"
 
 	"github.com/sirupsen/logrus"
 )
@@ -28,6 +30,23 @@ var (
 	// informers is the set of all informers for the resources watched by the user
 	informers []sdkInformer.Informer
 )
+
+// CreateCRD creates the CustomResourceDefinition
+func CreateCRD(crApiVersion, crName, namespace string) {
+	logrus.Infof("Creating %s CRD in %s", crName, namespace)
+	apiVersion, kind := "apiextensions.k8s.io/v1beta1", "CustomResourceDefinition"
+	s := strings.Split(crApiVersion, "/")
+	group, version := s[0], s[1]
+	resourceClient, _, err := k8sclient.GetResourceClient(apiVersion, kind, namespace)
+	if err != nil {
+		logrus.Errorf("failed to get resource client: %v", err)
+		panic(err)
+	}
+	if err = k8sutil.CreateCRD(resourceClient, crName, group, version); err != nil {
+		logrus.Errorf("failed to create CRD: %v", err)
+		panic(err)
+	}
+}
 
 // Watch watches for changes on the given resource.
 // apiVersion for a resource is of the format "Group/Version" except for the "Core" group whose APIVersion is just "v1". For e.g:
