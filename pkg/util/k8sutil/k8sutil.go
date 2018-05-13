@@ -18,7 +18,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
+	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -146,4 +150,27 @@ func GetWatchNamespace() (string, error) {
 		return "", fmt.Errorf("%s must not be empty", WatchNamespaceEnvVar)
 	}
 	return ns, nil
+}
+
+func CreateCRD(clientset apiextensionsclient.Interface, crName, group, version string) (err error) {
+	crd := &apiextensionsv1beta1.CustomResourceDefinition{
+		ObjectMeta: metav1.ObjectMeta{Name: strings.ToLower(crName) + "s." + group},
+		Spec: apiextensionsv1beta1.CustomResourceDefinitionSpec{
+			Group:   group,
+			Version: version,
+			Scope:   apiextensionsv1beta1.NamespaceScoped,
+			Names: apiextensionsv1beta1.CustomResourceDefinitionNames{
+				Plural:   strings.ToLower(crName) + "s",
+				Kind:     crName,
+				ListKind: crName + "List",
+				Singular: strings.ToLower(crName),
+			},
+		},
+	}
+	_, err = clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Create(crd)
+	if err != nil && !apierrors.IsAlreadyExists(err) {
+		return err
+	}
+	// TODO: watch discovery information of the API server to see /apis/group/version/namespaces/*/name/... show up
+	return nil
 }
